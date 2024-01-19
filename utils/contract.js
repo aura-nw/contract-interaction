@@ -1,12 +1,24 @@
 'use strict';
 const fs = require('fs');
-
+const path = require("path");
+const { toUtf8 } = require('@cosmjs/encoding');
 const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet, coin } = require('@cosmjs/proto-signing');
 const { calculateFee, GasPrice } = require('@cosmjs/stargate');
 
+class ExecuteMsg {
+    constructor(msg, native_amount = 0, native_denom = "") {
+        this.msg = msg;
+        this.native_amount = native_amount;
+        this.native_denom = native_denom;
+    }
+}
+
 class Contract {
-    static async init(chainConfig, mnemonic, codeId = 0, contractAddress = "") {
+    async init(chainConfig, mnemonic, codeId = 0, contractAddress = "") {
+        this.executeMsgs = [];
+        this.queryMsgs = [];
+
         this.chainConfig = chainConfig;
 
         this.codeId = codeId;
@@ -34,7 +46,7 @@ class Contract {
             return;
         }
         const uploadFee = calculateFee(gasLimit, this.gasPrice);
-        const contractCode = fs.readFileSync(`${wasm_file}`);
+        const contractCode = fs.readFileSync(path.resolve(__dirname, `${wasm_file}`));
 
         console.log(`Storing new code...`);
         const storeCodeResponse = await this.userClient.upload(this.userAccount.address, contractCode, uploadFee, 'Upload contract code');
@@ -44,6 +56,7 @@ class Contract {
         console.log("  gasUsed / gasWanted: ", storeCodeResponse.gasUsed, " / ", storeCodeResponse.gasWanted);
 
         this.codeId = storeCodeResponse.codeId;
+        return storeCodeResponse;
     }
 
     async instantiate(instantiateMsg) {
@@ -113,6 +126,49 @@ class Contract {
         return executeResponse;
     }
 
+    async execute_multi_msgs(executeMsgs, memo = "", native_amount = 0, native_denom = this.chainConfig.denom) {
+        // we accept only maximum 100 messages
+        if (executeMsgs.length > 100) {
+            console.log("Too many messages, max 100 messages allowed");
+            return;
+        }
+
+        let exec_messages = [];
+        executeMsgs.forEach(message => {
+            if (message.native_amount != 0) {
+                let broadcast_mess = {
+                    typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
+                    value: {
+                        sender: this.userAccount.address,
+                        contract: this.contractAddress,
+                        msg: toUtf8(JSON.stringify(message.msg)),
+                        funds: [coin(String(message.native_amount), message.native_denom)],
+                    }
+                }
+                exec_messages.push(broadcast_mess);
+            } else {
+                let broadcast_mess = {
+                    typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
+                    value: {
+                        sender: this.userAccount.address,
+                        contract: this.contractAddress,
+                        msg: toUtf8(JSON.stringify(message.msg)),
+                    }
+                }
+                exec_messages.push(broadcast_mess);
+            }
+
+        });
+
+        console.log("Executing messages to contract...");
+        let executeResponse = await this.userClient.signAndBroadcast(this.userAccount.address, exec_messages, 'auto', memo);
+
+        console.log("  transactionHash: ", executeResponse.transactionHash);
+        console.log("  gasUsed / gasWanted: ", executeResponse.gasUsed, " / ", executeResponse.gasWanted);
+
+        return executeResponse;
+    }
+
     async query(queryMsg) {
         console.log("Querying contract...");
 
@@ -124,4 +180,7 @@ class Contract {
     }
 }
 
-module.exports = Contract;
+module.exports = {
+    Contract: Contract,
+    ExecuteMsg: ExecuteMsg
+};

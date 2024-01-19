@@ -1,13 +1,13 @@
 const fs = require('fs');
 const CHAINS = require('./config/chains');
-const Contract = require('./utils/contract')
+const { Contract, ExecuteMsg } = require('./utils/contract')
 
 // load mnemonic from file
 const mnemonic = fs.readFileSync(`.secret`).toString().trim();
 
 async function main() {
-
-    let contract = await Contract.init(CHAINS.euphoria, mnemonic);
+    let contract = new Contract();
+    await contract.init(CHAINS.euphoria, mnemonic);
 
     console.log("user address: ", contract.userAccount.address);
 }
