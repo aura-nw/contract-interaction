@@ -8,7 +8,7 @@ const mnemonic = fs.readFileSync(path.resolve(__dirname, `../.secret`)).toString
 
 async function main() {
     let contract = new Contract();
-    await contract.init(CHAINS.euphoria, mnemonic, 1681);
+    await contract.init(CHAINS.euphoria, mnemonic, 1689);
 
     console.log("user address: ", contract.userAccount.address);
     console.log("codeId: ", contract.codeId);
