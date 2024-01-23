@@ -21,8 +21,8 @@ The [storing script](./1_store_code.js) requires only one argument which is the 
 
 ## Instantiate contractk
 The [instantiating script](./2_instantiate_contract.js) requires two arguments: the code id of the contract and the init message. The init message `initMsg` is used in this script based on the requirements of cw20-base contract version 1.1.2. It includes the `name`, `symbol`, `decimals`, `initial_balances` and `mint` fields. Additionally, you can add the `marketing` field to the init message to set the marketing information for token.
-```json
-{
+```javascript
+const initMsg ={
     name: "Euphoria Token",
     symbol: "EUPH",
     decimals: 6,
