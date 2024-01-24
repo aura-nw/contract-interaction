@@ -178,6 +178,56 @@ class Contract {
 
         return queryResponse;
     }
+
+    async send_token(recipient, amount, denom = this.chainConfig.denom) {
+        console.log("Sending token...");
+        const sendResponse = await this.userClient.sendTokens(
+            this.userAccount.address,
+            recipient,
+            [coin(amount, denom)],
+            'auto'
+        );
+
+        console.log("  transactionHash: ", sendResponse.transactionHash);
+        console.log("  gasUsed / gasWanted: ", sendResponse.gasUsed, " / ", sendResponse.gasWanted);
+
+        return sendResponse;
+    }
+
+    async multi_send_token(recipients, denom = this.chainConfig.denom) {
+        let total_amount = 0;
+        let outputs = [];
+        for (let i = 0; i < recipients.length; i++) {
+            outputs.push({
+                address: recipients[i].address,
+                coins: [coin(recipients[i].amount, denom)],
+            });
+            total_amount += recipients[i].amount;
+        }
+
+        let inputs = [
+            {
+                address: this.userAccount.address,
+                coins: [coin(total_amount, denom)],
+            }
+        ];
+
+        let broadcast_mess = {
+            typeUrl: '/cosmos.bank.v1beta1.MsgMultiSend',
+            value: {
+                inputs: inputs,
+                outputs: outputs,
+            }
+        }
+
+        console.log("Sending tokens...");
+        let sendResponse = await this.userClient.signAndBroadcast(this.userAccount.address, [broadcast_mess], 'auto');
+
+        console.log("  transactionHash: ", sendResponse.transactionHash);
+        console.log("  gasUsed / gasWanted: ", sendResponse.gasUsed, " / ", sendResponse.gasWanted);
+
+        return sendResponse;
+    }
 }
 
 module.exports = {
