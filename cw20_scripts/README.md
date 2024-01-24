@@ -42,27 +42,27 @@ const initMsg ={
 ## Execute contract
 The executing scripts include:
 - [transfer token](./3_transfer_token.js)
-- [send token](./5_send_token.js)
+- [send token](./5.2_send_token.js)
 - [multiple transfer token](./4_multiple_transfer_token.js)
 
 ### Single executing transaction
-The first two scripts are single executing transactions. This means there is only one message in the transaction. You can change the executing message in the scripts (corresponding `transferMsg` and `sendMsg` in the scripts) by the others execute messages of cw20-base contract in the following list:
+The first two scripts are single executing transactions. This means there is only one message in the transaction (note that, before running [send token](./5.2_send_token.js), you can store and instantiate new `RECEIPENT_CONTRACT` by using [setup hello cw20](./5.1_setup_hello_cw20.js)). The executing message in the scripts (corresponding `transferMsg` and `sendMsg` in the scripts) can be changed by the others execute messages of cw20-base contract in the following list:
 
 1. Transfer `AMOUNT` (String) tokens from user account to `RECEIPIENT` (Address) account
    ```javascript
     const transferMsg = {
-    transfer: {
-        recipient: RECEIPIENT,
-        amount: AMOUNT
-    }
+        transfer: {
+            recipient: RECEIPIENT,
+            amount: AMOUNT
+        }
     }
    ```
 2. Burn `AMOUNT` (String) tokens of user
    ```javascript
     const burnMsg = {
-    burn: {
-        amount: AMOUNT
-    }
+        burn: {
+            amount: AMOUNT
+        }
     }
    ```
 3. Send `AMOUNT` (String) tokens from user account to `CONTRACT` (Address) contract and require the contract to process the message `MSG` (encoded base64 Json string of the message)
