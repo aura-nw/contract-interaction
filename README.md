@@ -5,6 +5,7 @@ Before running the scripts, please make sure you have installed all the dependen
 ```bash
 npm install
 ```
+then create a `.secret` file in the root directory of the project, and put your mnemonic in it.
 
 ## Usage
 ```bash
