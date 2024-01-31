@@ -59,7 +59,33 @@ class Contract {
         return storeCodeResponse;
     }
 
-    async instantiate(instantiateMsg) {
+    async migrate(migrateMsg, codeId, gasLimit = 2600000) {
+        // if contractAddress is empty, then the contract is not instantiated
+        if (this.contractAddress == "") {
+            console.log("Contract NOT instantiated");
+            return;
+        }
+
+        const migrateFee = calculateFee(gasLimit, this.gasPrice);
+
+        console.log(`Migrating contract...`);
+        const migrateResponse = await this.userClient.migrate(
+            this.userAccount.address,
+            this.contractAddress,
+            codeId,
+            migrateMsg,
+            migrateFee,
+            'Migrate contract',
+        );
+
+        console.log("  transactionHash: ", migrateResponse.transactionHash);
+        console.log("  gasUsed / gasWanted: ", migrateResponse.gasUsed, " / ", migrateResponse.gasWanted);
+
+        this.codeId = codeId;
+        return migrateResponse;
+    }
+
+    async instantiate(instantiateMsg, admin = "") {
         // if codeId is 0, then the code is not stored
         if (this.codeId == 0) {
             console.log("Contract code NOT exists");
@@ -72,6 +98,11 @@ class Contract {
             return;
         }
 
+        // if admin is empty, then the user is the admin
+        if (admin == "") {
+            admin = this.userAccount.address;
+        }
+
         console.log("Instantiating contract...");
 
         //Instantiate the contract
@@ -81,6 +112,7 @@ class Contract {
             instantiateMsg,
             "instantiation contract",
             "auto",
+            { admin: admin }
         );
         console.log("  transactionHash: ", instantiateResponse.transactionHash);
         console.log("  contractAddress: ", instantiateResponse.contractAddress);
